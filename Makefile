@@ -5,7 +5,16 @@ SPEC = smartmet-uplot
 
 RPMBUILD = rpmbuild --define "_sourcedir $(CURDIR)"
 
-.PHONY: all sources srpm rpm unpack clean
+# Installation directories for 'make install' (same layout as the RPM)
+PREFIX ?= /usr
+DATADIR ?= $(PREFIX)/share
+INSTALLDIR = $(DESTDIR)$(DATADIR)/smartmet/uplot
+LICENSEDIR = $(DESTDIR)$(DATADIR)/licenses/$(SPEC)
+
+FILES = dist/uPlot.iife.min.js dist/uPlot.min.css
+LICENSES = LICENSE
+
+.PHONY: all sources srpm rpm unpack install clean
 
 all:
 	@echo "Use 'make rpm' to download the sources and build the RPM package."
@@ -28,7 +37,17 @@ unpack: sources
 	rm -rf dist package
 	tar -xzf uplot-*.tgz
 	mkdir -p dist
-	cp package/dist/uPlot.iife.min.js package/dist/uPlot.min.css dist/
+	cp $(addprefix package/,$(FILES)) dist/
+	rm -rf package
+
+# Install the same file set as the RPM directly, without building a package.
+# Supports DESTDIR and PREFIX, e.g. 'make install DESTDIR=/tmp/root'.
+install: sources
+	rm -rf package
+	tar -xzf uplot-*.tgz
+	install -d $(INSTALLDIR) $(LICENSEDIR)
+	install -m 0644 $(addprefix package/,$(FILES)) $(INSTALLDIR)/
+	install -m 0644 $(addprefix package/,$(LICENSES)) $(LICENSEDIR)/
 	rm -rf package
 
 clean:
